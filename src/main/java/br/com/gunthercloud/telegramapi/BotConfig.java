@@ -11,8 +11,8 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 public class BotConfig {
 	@Bean
 	public TelegramBot telegramBot(@Value("${bot.name}") String botName,
-			@Value("${bot.token}") String botToken) {
-		TelegramBot telegramBot = new TelegramBot(botName, botToken);
+			@Value("${bot.token}") String botToken, @Value("${bot.admin}") Long idAdmin) {
+		TelegramBot telegramBot = new TelegramBot(botName, botToken, idAdmin);
 		try {
 			var telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
 			telegramBotsApi.registerBot(telegramBot);

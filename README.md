@@ -1,21 +1,33 @@
-# TelegramAPIBot
+# Telegram API Bot With Spring Boot
 
 ## Description
 
-TelegramAPIBot is a simple Spring Boot application that uses the Telegram API to send messages to a chat.
+This Telegram bot is a model that will show products for sale and will have automatic payment return. The bot will have buttons to facilitate the purchase process and will be fully automated.
 
 ## Usage
 
 1. Create a Telegram bot and get the bot token and username in [@botfather](https://t.me/botfather).
-2. Set the environment variables ```${BOT_TOKEN}``` and ```${BOT_USERNAME}``` in your ```application.properties``` file.
+2. Set the environment variables in your ```application.properties``` file.
 3. Run the application using the Spring Boot CLI.
 4. The application will start and send messages to the chat.
 
-
 ## Environment Variables
 
-* ```${BOT_TOKEN}``` - Bot Token
-* ```${BOT_USERNAME}``` - Bot Username
+* ```${BOT_TOKEN}``` - Bot Token from [@botfather](https://t.me/botfather)
+* ```${BOT_USERNAME}``` - Bot Username from [@botfather](https://t.me/botfather)
+* ```${ADMIN_ID}``` - Use ```/getid``` command to get your Telegram ID from [@myidbot](https://t.me/myidbot)
+
+## Commands
+
+### Commands for users
+
+* ```/start``` - Start the bot
+* ```/id``` - Get your Telegram ID
+
+### Commands for admin
+
+* ```/ban``` - Ban a user
+* ```/unban``` - Unban a user
 
 ## Author
 
