@@ -31,6 +31,10 @@ This Telegram bot is a model that will show products for sale and will have auto
 * ```/ban``` - Ban a user
 * ```/unban``` - Unban a user
 * ```/banidos``` - List banned users
+* ```/deletartudo``` - Delete all data
+* ```/usuarios``` - List registered users in the bot
+* ```/licenca``` - License information
+* ```/verid``` - Get the Telegram ID of a user registered in the bot
 * ```/ajuda``` - Command list admin
 
 ## Author

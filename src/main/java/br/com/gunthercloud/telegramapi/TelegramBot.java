@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.InputMismatchException;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -38,6 +37,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 	String BANNED_MESSAGE = "Você foi banido! entre em contato com o dono! \n\n@LucasBonny";
 	String ALREADY_USER = "Usuário já está banido, caso deseje tirá-lo digite /unban!";
 	String REGISTERED_USER = "Usuário novo registrado!";
+	String NOT_EXISTS_USER = "Esse usuário não está presente nessa lista!";
 	
 	//Rotas
 	String STARTED_USERS = "Users.txt";
@@ -45,6 +45,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 	
 	//Comandos
 	String BAN_COMMAND = "Por gentileza, informe:\n\n/ban (ID) (MOTIVO)";
+	String UNBAN_COMMAND = "Por gentileza, informe:\n\n/unban (ID)";
 	
 	public TelegramBot(String botName, String botToken, Long idAdmin) {
 		super(botToken);
@@ -92,6 +93,10 @@ public class TelegramBot extends TelegramLongPollingBot{
 			 Admin Commands
 			 * /ban
 			 * /unban
+			 * /deletartudo
+			 * /verid
+			 * /usuarios
+			 * /licenca
 			 * /banidos
 			 * /ajuda
 			 * */
@@ -140,7 +145,11 @@ public class TelegramBot extends TelegramLongPollingBot{
 
 			if(command.startsWith("/banidos")) {
 				logHandle(update);
-				
+				if(!(update.getMessage().getChatId() == (long) idAdmin)) {
+					sendMessage(update, INVALID_COMMAND);
+					sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + "(`" + update.getMessage().getChatId() + "`) tentou usar o comando /banidos!");
+					return;
+				}
 				//Leio linha por linha do arquivo
 				try (BufferedReader br = new BufferedReader(new FileReader(BANNED_USERS))){
 					String line = br.readLine();
@@ -188,7 +197,64 @@ public class TelegramBot extends TelegramLongPollingBot{
 			
 			if(command.startsWith("/unban")) {
 				logHandle(update);
-				return;
+				
+				if(!(update.getMessage().getChatId() == (long) idAdmin)) {
+					sendMessage(update, INVALID_COMMAND);
+					sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() 
+							+ "(`" + update.getMessage().getChatId() + "`) tentou usar o comando /unban!");
+					return;
+				}
+				
+				String[] parts = command.split(" ");
+				if(parts.length < 2 || parts[1].matches(".*[a-zA-Z].*")) {
+					String msg = parts.length < 2 ? UNBAN_COMMAND : "Insira somente numeros no ID!\n" + UNBAN_COMMAND;
+					sendMessage(update, msg);
+					return;
+				}
+
+				String userIdToUnban = parts[1];
+				boolean exists = false;
+				
+				try(BufferedReader br = new BufferedReader(new FileReader(BANNED_USERS));
+					BufferedWriter bw = new BufferedWriter(new FileWriter(BANNED_USERS + "_temp"))){
+					String line = br.readLine();
+					while((line = br.readLine()) != null) {
+						String[] val = line.split(" ");
+						if(val[0].equals(userIdToUnban)) {
+							exists = true;
+						}
+						else {
+							bw.write(line);
+							bw.newLine();
+						}
+					}
+					if(exists == false) {
+						sendMessage(update, NOT_EXISTS_USER);
+						return;
+					}
+				} catch (IOException e) {
+			        sendMessage(update, "Erro ao processar a lista de banidos!");
+					e.printStackTrace();
+					return;
+				}
+				if(exists) {
+					System.out.println("Teste 1");
+					File originalFile = new File(BANNED_USERS);
+					File tempFile = new File(BANNED_USERS + "_temp");
+					if(!tempFile.isFile()) {
+						System.out.println("Teste 2");
+					}
+					if(originalFile.delete() && tempFile.renameTo(originalFile)) {
+						sendMessage(update, "Usuário desbanido com sucesso!");
+					}
+					else {
+			            sendMessage(update, "Erro ao atualizar a lista de banidos!");
+			        }
+				}
+				else {
+					new File(BANNED_USERS + "_temp").delete(); //Analisar
+					sendMessage(update, "Usuário não encontrado na lista de banidos.");
+				}
 			}
 			
 			if(command.startsWith("/ban")) {
@@ -196,7 +262,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 				
 				if(!(update.getMessage().getChatId() == (long) idAdmin)) {
 					sendMessage(update, INVALID_COMMAND);
-					sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + "(`" + update.getMessage().getChatId() + "`) tentou usar o /ban!");
+					sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + "(`" + update.getMessage().getChatId() + "`) tentou usar o comando /ban!");
 					return;
 				}
 				
@@ -208,6 +274,10 @@ public class TelegramBot extends TelegramLongPollingBot{
 				}
 				if(parts[1].matches(".*[a-zA-Z].*")) {
 					sendMessage(update, "Insira somente numeros no ID!\n" + BAN_COMMAND);
+					return;
+				}
+				if(idAdmin == Long.parseLong(parts[1])) {
+					sendMessage(update, "Você não pode banir esse usuário!");
 					return;
 				}
 				
