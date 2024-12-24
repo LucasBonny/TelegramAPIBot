@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -34,10 +35,12 @@ public class TelegramBot extends TelegramLongPollingBot{
 	String INVALID_COMMAND = "Comando inválido, digite /start.";
 	String INVALID_USER = "Por gentileza, registre um usuário em suas configurações!";
 	String BAN_SUCCESSFUL = "Usuário banido com sucesso!";
-	String BANNED_MESSAGE = "Você foi banido! entre em contato com o dono!";
+	String BANNED_MESSAGE = "Você foi banido! entre em contato com o dono! \n\n@LucasBonny";
 	String ALREADY_USER = "Usuário já está banido, caso deseje tirá-lo digite /unban!";
+	String REGISTERED_USER = "Usuário novo registrado!";
 	
 	//Rotas
+	String STARTED_USERS = "Users.txt";
 	String BANNED_USERS = "BannedUsers.txt";
 	
 	//Comandos
@@ -84,6 +87,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 			 User Commands
 			 * /start
 			 * /id
+			 * /suporte
 			 * /ajuda
 			 Admin Commands
 			 * /ban
@@ -94,6 +98,33 @@ public class TelegramBot extends TelegramLongPollingBot{
 
 			// User Commands
 			if(command.startsWith("/start")) {
+				try (BufferedReader br = new BufferedReader(new FileReader(STARTED_USERS))){
+					String line = br.readLine();
+					boolean exists = false;
+					while(line != null) {
+						String[] parts = line.split(" ");
+						if(update.getMessage().getChatId() == (long) Long.parseLong(parts[1])) {
+							exists = true;
+						}
+						line = br.readLine();
+					}
+					if(exists == false) {
+						try (BufferedWriter bw = new BufferedWriter(new FileWriter(STARTED_USERS,true))){
+							bw.write(update.getMessage().getChat().getUserName() + " " 
+						+ update.getMessage().getChat().getId() + " " + LocalDateTime.now()
+						.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+							sendMessageAdmin(update, REGISTERED_USER + "\n\n@" + update.getMessage().getChat().getUserName() + " `" 
+									+ update.getMessage().getChat().getId() + "`");
+							bw.newLine();
+						}
+						catch(IOException e){
+							e.printStackTrace();
+						}
+					}
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
 				menuList(update);
 				logHandle(update);
 				sendStartMessage(update);
@@ -106,18 +137,77 @@ public class TelegramBot extends TelegramLongPollingBot{
 			}
 			
 			// Admin Commands
+
+			if(command.startsWith("/banidos")) {
+				logHandle(update);
+				
+				//Leio linha por linha do arquivo
+				try (BufferedReader br = new BufferedReader(new FileReader(BANNED_USERS))){
+					String line = br.readLine();
+					if(line == null) {
+						sendMessage(update, "Não há usuários banidos!");
+						return;
+					}
+					StringBuilder mensagem = new StringBuilder();
+					mensagem.append("❌ Usuários Banidos ❌\n\n");
+					
+					while(line != null) {
+						String[] parts = line.split(" ");
+						
+						//logica de busca
+						try (BufferedReader br2 = new BufferedReader(new FileReader(STARTED_USERS))){
+							String line2 = br2.readLine();
+							while(line2 != null) {
+								String[] users = line2.split(" ");
+								if(parts[0].hashCode() == users[1].hashCode()) {
+									if(parts[0].equals(users[1])) {
+										mensagem.append("@" + users[0] +" ");
+									}
+								}
+								line2 = br2.readLine();
+							}
+						}
+						
+						mensagem.append("`" + parts[0] +"` ");
+						for(int i = 1; i < parts.length; i++) {
+							
+							mensagem.append(parts[i] + " ");
+							if(i == parts.length -1) {
+								mensagem.append("\n");
+							}
+						}
+						line = br.readLine();
+					}
+					sendMessage(update, mensagem.toString());
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+				return;
+			}
+			
+			if(command.startsWith("/unban")) {
+				logHandle(update);
+				return;
+			}
+			
 			if(command.startsWith("/ban")) {
 				logHandle(update);
 				
 				if(!(update.getMessage().getChatId() == (long) idAdmin)) {
 					sendMessage(update, INVALID_COMMAND);
-					sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + " tentou usar o /ban!");
+					sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + "(`" + update.getMessage().getChatId() + "`) tentou usar o /ban!");
 					return;
 				}
 				
 				String[] parts = command.split(" ");
+				;
 				if(parts.length < 3) {
 					sendMessage(update, BAN_COMMAND);
+					return;
+				}
+				if(parts[1].matches(".*[a-zA-Z].*")) {
+					sendMessage(update, "Insira somente numeros no ID!\n" + BAN_COMMAND);
 					return;
 				}
 				
@@ -226,18 +316,18 @@ public class TelegramBot extends TelegramLongPollingBot{
 		//Botão 1
 		List<InlineKeyboardButton> row1 = new ArrayList<>();
 		InlineKeyboardButton button1 = new InlineKeyboardButton();
-		button1.setText("Ajuda");
+		button1.setText("Produto 1");
 		button1.setCallbackData("option_1");
 		
 		//Botão 2
 		List<InlineKeyboardButton> row2 = new ArrayList<>();
 		InlineKeyboardButton button2 = new InlineKeyboardButton();
-		button2.setText("Fala ae");
+		button2.setText("Produto 2");
 		button2.setCallbackData("option_2");
 		
 		InlineKeyboardButton button3 = new InlineKeyboardButton();
 		button3.setCallbackData("option_3");
-		button3.setText("Nada aki");
+		button3.setText("Produto 3");
 		
 		row1.add(button1);
 		row2.add(button2);

@@ -23,11 +23,15 @@ This Telegram bot is a model that will show products for sale and will have auto
 
 * ```/start``` - Start the bot
 * ```/id``` - Get your Telegram ID
+* ```/suporte``` - Send a message to the admin
+* ```/ajuda``` - Command list
 
 ### Commands for admin
 
 * ```/ban``` - Ban a user
 * ```/unban``` - Unban a user
+* ```/banidos``` - List banned users
+* ```/ajuda``` - Command list admin
 
 ## Author
 
