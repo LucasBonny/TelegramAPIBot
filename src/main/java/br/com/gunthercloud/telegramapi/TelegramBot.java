@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -95,6 +96,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 			 * /unban
 			 * /deletartudo
 			 * /verid
+			 * /anunciar
 			 * /usuarios
 			 * /licenca
 			 * /banidos
@@ -132,7 +134,6 @@ public class TelegramBot extends TelegramLongPollingBot{
 				}
 				menuList(update);
 				logHandle(update);
-				sendStartMessage(update);
 				return;
 			}
 			if(command.startsWith("/id")) {
@@ -142,14 +143,43 @@ public class TelegramBot extends TelegramLongPollingBot{
 			}
 			
 			// Admin Commands
+			
+			if(command.startsWith("/verid")) {
+				logHandle(update);
+				validarAdmin(update);
+				String[] parts = update.getMessage().getText().split(" ");
+				
+				if(parts.length < 2) {
+					sendMessage(update, "Por gentileza, informe:\n\n/verid (ID)");
+					return;
+				}
+				
+				try (BufferedReader br = new BufferedReader(new FileReader(STARTED_USERS))){
+					String line;
+					boolean exists = false;
+					while((line = br.readLine()) != null) {
+						String[] user = line.split(" ");
+						if(parts[1].equals(user[1])) {
+							exists = true;
+							sendMessage(update, "Usuário: @" + user[0] + "\nID: `" + user[1] + "`\nRegistrado: \n" + user[2] + " " + user[3]);
+							return;
+						}
+					}
+					if(!exists) {
+						sendMessage(update, "Esse ID não existe! digite /usuarios para ver os usuários registrados!");
+						return;
+					}
+				}
+				catch(IOException e) {
+					e.printStackTrace();
+				}
+				
+				return;
+			}
 
 			if(command.startsWith("/banidos")) {
 				logHandle(update);
-				if(!(update.getMessage().getChatId() == (long) idAdmin)) {
-					sendMessage(update, INVALID_COMMAND);
-					sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + "(`" + update.getMessage().getChatId() + "`) tentou usar o comando /banidos!");
-					return;
-				}
+				validarAdmin(update);
 				//Leio linha por linha do arquivo
 				try (BufferedReader br = new BufferedReader(new FileReader(BANNED_USERS))){
 					String line = br.readLine();
@@ -197,13 +227,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 			
 			if(command.startsWith("/unban")) {
 				logHandle(update);
-				
-				if(!(update.getMessage().getChatId() == (long) idAdmin)) {
-					sendMessage(update, INVALID_COMMAND);
-					sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() 
-							+ "(`" + update.getMessage().getChatId() + "`) tentou usar o comando /unban!");
-					return;
-				}
+				validarAdmin(update);
 				
 				String[] parts = command.split(" ");
 				if(parts.length < 2 || parts[1].matches(".*[a-zA-Z].*")) {
@@ -257,14 +281,35 @@ public class TelegramBot extends TelegramLongPollingBot{
 				}
 			}
 			
+			if(command.startsWith("/ping")) {
+				logHandle(update);
+				validarAdmin(update);
+				SendMessage message = new SendMessage();
+				message.setText("/pong");
+				message.setChatId(update.getMessage().getChatId());
+				
+				InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+				
+				List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+//				
+//				rows.add(newButton("Pong"));
+//				rows.add(newButton("Pong"));
+				keyboardMarkup.setKeyboard(rows);
+				
+				message.setReplyMarkup(keyboardMarkup);
+				
+				try {
+					execute(message);
+				}
+				catch(Exception e) {
+					e.printStackTrace();
+				}
+				return;
+			}
+			
 			if(command.startsWith("/ban")) {
 				logHandle(update);
-				
-				if(!(update.getMessage().getChatId() == (long) idAdmin)) {
-					sendMessage(update, INVALID_COMMAND);
-					sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + "(`" + update.getMessage().getChatId() + "`) tentou usar o comando /ban!");
-					return;
-				}
+				validarAdmin(update);
 				
 				String[] parts = command.split(" ");
 				;
@@ -330,6 +375,27 @@ public class TelegramBot extends TelegramLongPollingBot{
 		}
 		
 	}
+	
+private void validarAdmin(Update update) {
+		String[] parts = update.getMessage().getText().split(" ");
+		if(!(update.getMessage().getChatId() == (long) idAdmin)) {
+			sendMessage(update, INVALID_COMMAND);
+			sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + "(`" + update.getMessage().getChatId() + "`) tentou usar o comando " + parts[0]);
+			return;
+		}
+	}
+
+	//	handleButton
+	private List<InlineKeyboardButton> newButton(String text) {
+		
+		InlineKeyboardButton button = new InlineKeyboardButton();
+		button.setText(text);
+		button.setCallbackData(text);
+		
+		List<InlineKeyboardButton> row = Arrays.asList(button);
+		return row;
+	}
+	
 	private boolean BannedUsers(Update update) {
 		try (BufferedReader br = new BufferedReader(new FileReader(BANNED_USERS))){
 			String line = br.readLine();
@@ -348,6 +414,8 @@ public class TelegramBot extends TelegramLongPollingBot{
 		}
 		return false;
 	}
+	
+
 	private void logHandle(Update update) {
 		//Log
 		System.out.println(LocalDateTime.now()
@@ -358,8 +426,29 @@ public class TelegramBot extends TelegramLongPollingBot{
 	
 	private void menuList(Update update) {
 		sendSticker(update, STICKER);
-		sendMessage(update, "Olá " + update.getMessage().getChat().getFirstName() 
+		SendMessage message = new SendMessage();
+		message.setChatId(update.getMessage().getChatId());
+		message.setText("Olá " + update.getMessage().getChat().getFirstName() 
 				+ ", seja bem vindo ao bot de serviços automáticos!" + "\n\nDev: @LucasBonny");
+		InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
+		
+		List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+		
+		rows.add(newButton("💻 Hospedagem de Sites"));
+		rows.add(newButton("👨‍💼 Painel ATLAS"));
+		rows.add(newButton("🚴‍♂️ Suporte"));
+		
+		keyboardMarkup.setKeyboard(rows);
+		
+		message.setReplyMarkup(keyboardMarkup);
+		
+		try {
+			execute(message);
+		}
+		catch(TelegramApiException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	private void sendSticker(Update update, String sticker) {
@@ -375,48 +464,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 		}
 	}
 	
-	private void sendStartMessage(Update update) {
-		SendMessage message = new SendMessage();
-		message.setText("VICIADO");
-		message.setChatId(update.getMessage().getChatId().toString());
-		//Lista de botões - ArrayList
-		InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-		List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-		
-		//Botão 1
-		List<InlineKeyboardButton> row1 = new ArrayList<>();
-		InlineKeyboardButton button1 = new InlineKeyboardButton();
-		button1.setText("Produto 1");
-		button1.setCallbackData("option_1");
-		
-		//Botão 2
-		List<InlineKeyboardButton> row2 = new ArrayList<>();
-		InlineKeyboardButton button2 = new InlineKeyboardButton();
-		button2.setText("Produto 2");
-		button2.setCallbackData("option_2");
-		
-		InlineKeyboardButton button3 = new InlineKeyboardButton();
-		button3.setCallbackData("option_3");
-		button3.setText("Produto 3");
-		
-		row1.add(button1);
-		row2.add(button2);
-		row2.add(button3);
-		
-		rows.add(row1);
-		rows.add(row2);
-		
-		keyboardMarkup.setKeyboard(rows);
-		
-		message.setReplyMarkup(keyboardMarkup);
-		
-		try {
-			execute(message);
-		}
-		catch (TelegramApiException e) {
-			e.printStackTrace();
-		}
-	}
+	
 	
 //	private void createButton(SendMessage message, Update update) {
 //		
