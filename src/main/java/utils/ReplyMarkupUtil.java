@@ -1,7 +1,9 @@
 package utils;
 
 import br.com.gunthercloud.telegramapi.TelegramBot;
+import functions.Payment;
 import functions.Product;
+import handlers.CommandHandler;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -13,10 +15,12 @@ public class ReplyMarkupUtil {
 
     private final TelegramBot bot;
     private final Product product;
+    private final Payment payment;
 
-    public ReplyMarkupUtil(TelegramBot bot, Product product){
+    public ReplyMarkupUtil(TelegramBot bot, Product product, Payment payment){
         this.bot = bot;
         this.product = product;
+        this.payment = payment;
     }
 
     public void buttonConfirmation(SendMessage responseMessage){
@@ -27,8 +31,8 @@ public class ReplyMarkupUtil {
         InlineKeyboardButton button2 = new InlineKeyboardButton();
         button1.setText("Sim");
         button2.setText("Não");
-        button1.setCallbackData("2");
-        button2.setCallbackData("2");
+        button1.setCallbackData("paymentConfirmation");
+        button2.setCallbackData("backToHome");
         row.add(button1);
         row.add(button2);
         rows.add(row);
@@ -36,31 +40,39 @@ public class ReplyMarkupUtil {
         responseMessage.setReplyMarkup(keyboardMarkup);
     }
 
-    public void handleButtonInteraction(Long chatId, String callbackData) {
-
-        String responseText = "null";
+    public String[] checkProduct(String callbackData){
         for(String e : product.checkArchive()) {
             String[] parts = e.split(" /-/ ");
             StringBuilder msg = new StringBuilder();
             if (callbackData.equals(parts[4])) {
-                msg.append("Você deseja comprar um(a) ").append(parts[1])
-                        .append("\n\nValor: R$").append(parts[3].replace(".",","))
-                        .append("\n\nDescrição: ").append(parts[2]);
-                responseText = msg.toString();
-                SendMessage responseMessage = new SendMessage();
-                responseMessage.setChatId(chatId);
-                responseMessage.setText(responseText);
-                buttonConfirmation(responseMessage);
-                bot.executeMessage(responseMessage);
-                return;
+                return parts;
             }
         }
+        return null;
+    }
+    public void handleButtonInteraction(Long chatId, String callbackData) {
+
+        String responseText = "null";
         SendMessage responseMessage = new SendMessage();
         responseMessage.setChatId(chatId);
-        responseMessage.setText(responseText);
-
+        String[] parts = checkProduct(callbackData);
+        if(callbackData.equals("backToHome")){
+            responseMessage.setText("Compra cancelada! Digite /start para rever os produtos.");
+        }
+        if(callbackData.equals("paymentConfirmation")){
+            responseMessage = payment.handlePaymentButton(parts);
+            responseMessage.setChatId(chatId);
+        }
+        if(parts != null){
+            if (callbackData.equals(parts[4])) {
+                responseText = "Você deseja comprar um(a) " + parts[1] +
+                        "\n\nValor: R$" + parts[3].replace(".", ",") +
+                        "\n\nDescrição: " + parts[2];
+                responseMessage.setText(responseText);
+                buttonConfirmation(responseMessage);
+            }
+        }
         bot.executeMessage(responseMessage);
     }
-
 
 }

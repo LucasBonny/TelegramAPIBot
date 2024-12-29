@@ -5,8 +5,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
+import functions.Payment;
 import functions.Product;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -15,7 +15,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import handlers.CommandHandler;
@@ -26,8 +25,9 @@ import utils.ReplyMarkupUtil;
 public class TelegramBot extends TelegramLongPollingBot{
 
 	private final MessageHandler messageHandler = new MessageHandler(this);
+	private final Payment payment = new Payment(this);
 	private final Product product = new Product(this, messageHandler);
-	private final ReplyMarkupUtil replyMarkupUtil = new ReplyMarkupUtil(this, product);
+	private final ReplyMarkupUtil replyMarkupUtil = new ReplyMarkupUtil(this, product, payment);
 	private final CommandHandler commandHandler = new CommandHandler(this, product, messageHandler);
 
 	private final String botName;
