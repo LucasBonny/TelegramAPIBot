@@ -6,18 +6,26 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import functions.Product;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import br.com.gunthercloud.telegramapi.TelegramBot;
 
 public class CommandHandler {
-	
+
 	private final TelegramBot bot;
-	
-	public CommandHandler(TelegramBot bot) {
+	private final Product product;
+	private final MessageHandler messageHandler;
+
+	public CommandHandler(TelegramBot bot, Product product, MessageHandler messageHandler) {
 		this.bot = bot;
+		this.product = product;
+		this.messageHandler = messageHandler;
 	}
+
 	//Commands
 	/*	
 	 User Commands
@@ -58,17 +66,17 @@ public class CommandHandler {
 							bw.write(update.getMessage().getChat().getUserName() + " " 
 						+ update.getMessage().getChat().getId() + " " + LocalDateTime.now()
 						.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
-							bot.sendMessageAdmin(update, bot.REGISTERED_USER + "\n\n@" + update.getMessage().getChat().getUserName() + " `" 
+							messageHandler.sendMessageAdmin(update, bot.REGISTERED_USER + "\n\n@" + update.getMessage().getChat().getUserName() + " `"
 									+ update.getMessage().getChat().getId() + "`");
 							bw.newLine();
 						}
 						catch(IOException e){
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						}
 					}
 				}
 				catch (IOException e) {
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				bot.menuList(update);
 				bot.logHandle(update);
@@ -85,30 +93,29 @@ public class CommandHandler {
 				String[] parts = update.getMessage().getText().split(" ");
 				
 				if(parts.length < 2) {
-					bot.sendMessage(update, "Por gentileza, informe:\n\n/verid (ID)");
+					messageHandler.sendMessage(update, "Por gentileza, informe:\n\n/verid (ID)");
 					break;
 				}
 				
-				try (BufferedReader br = new BufferedReader(new FileReader(bot.STARTED_USERS))){
+				try (BufferedReader br = new BufferedReader(new FileReader(bot.STARTED_USERS))) {
 					String line;
 					while((line = br.readLine()) != null) {
 						String[] user = line.split(" ");
 						if(parts[1].equals(user[1])) {
-							bot.sendMessage(update, "Usuário: @" + user[0] + "\nID: `" + user[1] + "`\nRegistrado: \n" + user[2] + " " + user[3]);
+							messageHandler.sendMessage(update, "Usuário: @" + user[0] + "\nID: `" + user[1] + "`\nRegistrado: \n" + user[2] + " " + user[3]);
 							break;
 						}
 					}
-                    bot.sendMessage(update, "Esse ID não existe! digite /usuarios para ver os usuários registrados!");
+                    messageHandler.sendMessage(update, "Esse ID não existe! digite /usuarios para ver os usuários registrados!");
                     break;
                 }
 				catch(IOException e) {
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
-				break;
 			}
 			case "/id": {
 				bot.logHandle(update);
-				bot.sendMessage(update, update.getMessage().getChat().getFirstName() + " seu id é: \n " + update.getMessage().getChatId());
+				messageHandler.sendMessage(update, update.getMessage().getChat().getFirstName() + " seu id é: \n `" + update.getMessage().getChatId() + "`");
 			break;
 			}
 			case "/banidos": {
@@ -118,7 +125,7 @@ public class CommandHandler {
 				try (BufferedReader br = new BufferedReader(new FileReader(bot.BANNED_USERS))){
 					String line = br.readLine();
 					if(line == null) {
-						bot.sendMessage(update, "Não há usuários banidos!");
+						messageHandler.sendMessage(update, "Não há usuários banidos!");
 						break;
 					}
 					StringBuilder mensagem = new StringBuilder();
@@ -151,22 +158,21 @@ public class CommandHandler {
 						}
 						line = br.readLine();
 					}
-					bot.sendMessage(update, mensagem.toString());
+					messageHandler.sendMessage(update, mensagem.toString());
 				}
 				catch (IOException e) {
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 				break;
 			}
 			case "/unban" : {
-
 				bot.logHandle(update);
 				if(isAdmin(update)) break;
 				String[] parts = command.split(" ");
 
 				if(parts.length < 2 || parts[1].matches(".*[a-zA-Z].*")) {
 					String msg = parts.length < 2 ? bot.UNBAN_COMMAND : "Insira somente numeros no ID!\n" + bot.UNBAN_COMMAND;
-					bot.sendMessage(update, msg);
+					messageHandler.sendMessage(update, msg);
 					break;
 				}
 
@@ -187,39 +193,43 @@ public class CommandHandler {
 						}
 					}
 					if(!exists) {
-						bot.sendMessage(update, bot.NOT_EXISTS_USER);
+						messageHandler.sendMessage(update, bot.NOT_EXISTS_USER);
 						break;
 					}
 				} catch (IOException e) {
-					bot.sendMessage(update, "Erro ao processar a lista de banidos!");
-					e.printStackTrace();
-					break;
+					messageHandler.sendMessage(update, "Erro ao processar a lista de banidos!");
+					throw new RuntimeException(e);
 				}
                 System.out.println("Teste 1");
                 File originalFile = new File(bot.BANNED_USERS);
                 File tempFile = new File(bot.BANNED_USERS + "_temp");
                 if(originalFile.delete() && tempFile.renameTo(originalFile)) {
-                    bot.sendMessage(update, "Usuário desbanido com sucesso!");
+                    messageHandler.sendMessage(update, "Usuário desbanido com sucesso!");
                 }
                 else {
-                    bot.sendMessage(update, "Erro ao atualizar a lista de banidos!");
+                    messageHandler.sendMessage(update, "Erro ao atualizar a lista de banidos!");
                 }
             }
+			case "/criarprod" : {
+				bot.logHandle(update);
+				if (isAdmin(update)) break;
+				break;
+			}
 			case "/ban" : {
 				bot.logHandle(update);
 				if(isAdmin(update)) break;
 
 				String[] parts = command.split(" ");
 				if(parts.length < 3) {
-					bot.sendMessage(update, bot.BAN_COMMAND);
+					messageHandler.sendMessage(update, bot.BAN_COMMAND);
 					break;
 				}
 				if(parts[1].matches(".*[a-zA-Z].*")) {
-					bot.sendMessage(update, "Insira somente numeros no ID!\n" + bot.BAN_COMMAND);
+					messageHandler.sendMessage(update, "Insira somente numeros no ID!\n" + bot.BAN_COMMAND);
 					break;
 				}
 				if(bot.getIdAdmin() == Long.parseLong(parts[1])) {
-					bot.sendMessage(update, "Você não pode banir esse usuário!");
+					messageHandler.sendMessage(update, "Você não pode banir esse usuário!");
 					break;
 				}
 
@@ -229,14 +239,14 @@ public class CommandHandler {
 					while(line != null) {
 						String[] read = line.split(" ");
 						if(read[0].equals(parts[1])) {
-							bot.sendMessage(update, bot.ALREADY_USER);
+							messageHandler.sendMessage(update, bot.ALREADY_USER);
 							break;
 						}
 						line = br.readLine();
 					}
 				}
 				catch(IOException e){
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 
 				try (BufferedWriter bw = new BufferedWriter(new FileWriter(bot.BANNED_USERS,true))){
@@ -246,11 +256,11 @@ public class CommandHandler {
 						}
 						else bw.write(parts[i]);
 					}
-					bot.sendMessage(update, bot.BAN_SUCCESSFUL);
+					messageHandler.sendMessage(update, bot.BAN_SUCCESSFUL);
 					bw.newLine();
 				}
 				catch(IOException e){
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 
 			}
@@ -274,6 +284,42 @@ public class CommandHandler {
 				bot.executeMessage(message);
 				break;
 			}
+			case "/produtos" : {
+				bot.logHandle(update);
+				if (isAdmin(update)) break;
+				product.productFinder(update, "Produtos registrados ✅\n\nEscolha um para editá-lo!");
+				break;
+			}
+			case "/anunciar" : {
+				bot.logHandle(update);
+				if (isAdmin(update)) break;
+				//messageHandler.sendMessage(update, "Envie a imagem para o anuncio:");
+
+				//Perguntar se o anuncio é com imagem ou não
+				boolean isPhoto = true;
+				SendMessage message = new SendMessage();
+				message.setText("Alá, um viado");
+
+
+				SendPhoto photo = new SendPhoto();
+				photo.setPhoto(new InputFile("https://png.pngtree.com/background/20230519/original/pngtree-this-is-a-picture-of-a-tiger-cub-that-looks-straight-picture-image_2660243.jpg"));
+				photo.setCaption("Alá, um viado");
+				photo.setChatId(update.getMessage().getChatId());
+
+
+				for (String e : readFile(bot.STARTED_USERS)) {
+					String[] parts = e.split(" ");
+					if (isPhoto) {
+						photo.setChatId(Long.parseLong(parts[1]));
+						bot.executeMessage(photo);
+					}
+					else {
+						message.setChatId(Long.parseLong(parts[1]));
+						bot.executeMessage(message);
+					}
+				}
+				break;
+			}
 			default:
 				SendMessage message = new SendMessage();
 				message.setChatId(update.getMessage().getChatId());
@@ -289,19 +335,21 @@ public class CommandHandler {
 		msg.append("💬 Comandos de Ajuda 💬\n\n");
 
 		if(update.getMessage().getChatId() == (long) bot.getIdAdmin()) {
+			msg.append("/ajuda - Ver comandos admin\n");
+			msg.append("/anunciar - Anunciar para os usuários\n");
 			msg.append("/ban - Banir um usuário\n");
 			msg.append("/banidos - Ver banidos\n");
-			msg.append("/ajuda - Ver comandos admin\n");
-			msg.append("/unban - Desbanir um usuário\n");
+			msg.append("/criarprod - Criar um produto\n");
+			msg.append("/produtos - Ver produtos\n");
 			msg.append("/deletartudo - Limpar tudo no bot\n");
 			msg.append("/licenca - Ver informações da licença\n");
+			msg.append("/unban - Desbanir um usuário\n");
 			msg.append("/usuarios - Ver usuários registrados\n");
-
 		}
 		else {
 			msg.append("/start - Iniciar o bot\n");
 			msg.append("/id - Ver id\n");
-			msg.append("/suporte - Iniciar o bot\n");
+			msg.append("/suporte - Pedir ajuda\n");
 			msg.append("/ajuda - Ver comandos \n");
 		}
 		return msg;
@@ -318,8 +366,8 @@ public class CommandHandler {
 		if(update.getMessage().getChatId() == (long) bot.getIdAdmin()) {
 			return false;
 		}
-		bot.sendMessage(update, bot.INVALID_COMMAND);
-		bot.sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + "(`" + update.getMessage().getChatId() + "`) tentou usar o comando " + parseCommand[0]);
+		messageHandler.sendMessage(update, bot.INVALID_COMMAND);
+		messageHandler.sendMessageAdmin(update,"O usuário @" + update.getMessage().getChat().getUserName() + "(`" + update.getMessage().getChatId() + "`) tentou usar o comando " + parseCommand[0]);
 		return true;
 	}
 	public ArrayList<String> readFile(String dir) {

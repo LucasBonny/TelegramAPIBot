@@ -9,9 +9,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import functions.Product;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -25,11 +27,12 @@ import handlers.MessageHandler;
 @Component
 public class TelegramBot extends TelegramLongPollingBot{
 
-	private final CommandHandler commandHandler = new CommandHandler(this);
 	private final MessageHandler messageHandler = new MessageHandler(this);
-	
+	private final Product product = new Product(this, messageHandler);
+	private final CommandHandler commandHandler = new CommandHandler(this, product, messageHandler);
+
 	private final String botName;
-	private Long idAdmin;
+	private final Long idAdmin;
 	
 	//Mensagens
 
@@ -45,7 +48,8 @@ public class TelegramBot extends TelegramLongPollingBot{
 	//Rotas
 	public String STARTED_USERS = "Users.txt";
 	public String BANNED_USERS = "BannedUsers.txt";
-	
+	public String PRODUCTS_REGISTERED = "Products.txt";
+
 	//Comandos
 	public String BAN_COMMAND = "Por gentileza, informe:\n\n/ban (ID) (MOTIVO)";
 	public String UNBAN_COMMAND = "Por gentileza, informe:\n\n/unban (ID)";
@@ -64,7 +68,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 			execute(error);
 		}
 		catch(TelegramApiException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -81,7 +85,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 				return;
 			}
 			//Username banned
-			if(BannedUsers(update) == true) {
+			if(BannedUsers(update)) {
 				return;
 			}
 			if(update.hasMessage() && update.getMessage().hasText()) {
@@ -109,7 +113,6 @@ public class TelegramBot extends TelegramLongPollingBot{
 		InlineKeyboardButton button = new InlineKeyboardButton();
 		button.setText(text);
 		button.setCallbackData(data);
-
         return List.of(button);
 	}
 	private List<InlineKeyboardButton> newButton(String text) {
@@ -128,14 +131,14 @@ public class TelegramBot extends TelegramLongPollingBot{
 				String[] parts = line.split(" ");
 				long id = Long.parseLong(parts[0]);
 				if(update.hasMessage() && update.getMessage().getChatId() == id) {
-					sendMessage(update, BANNED_MESSAGE);
+					messageHandler.sendMessage(update, BANNED_MESSAGE);
 					return true;
 				}
 				line = br.readLine();
 			}
 		}
 		catch(IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		return false;
 	}
@@ -153,30 +156,8 @@ public class TelegramBot extends TelegramLongPollingBot{
 		sendSticker(update, STICKER);
 		SendMessage message = new SendMessage();
 		message.setChatId(update.getMessage().getChatId());
-		message.setText("Olá " + update.getMessage().getChat().getFirstName() 
+		product.productFinder(update,"Olá " + update.getMessage().getChat().getFirstName()
 				+ ", seja bem vindo ao bot de serviços automáticos!" + "\n\nDev: @LucasBonny");
-		InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
-
-		List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-		List<InlineKeyboardButton> row1 = new ArrayList<>();
-		
-		InlineKeyboardButton button = new InlineKeyboardButton();
-		button.setText("VAI VENDO");
-		button.setCallbackData("option_2");
-		
-		row1.add(button);
-		
-		rows.add(newButton("💻 Hospedagem de Sites", "option_2"));
-		rows.add(newButton("👨‍💼 Conversor"));
-		rows.add(newButton("🚴‍♂️ Suporte"));
-		rows.add(row1);
-		
-		keyboardMarkup.setKeyboard(rows);
-		
-		message.setReplyMarkup(keyboardMarkup);
-		
-		executeMessage(message);
-		
 	}
 	
 	private void sendSticker(Update update, String sticker) {
@@ -188,7 +169,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 			execute(stk);
 		}
 		catch (TelegramApiException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -212,35 +193,10 @@ public class TelegramBot extends TelegramLongPollingBot{
 		execute(responseMessage);
 	}
 	catch (TelegramApiException e) {
-		e.printStackTrace();
+		throw new RuntimeException(e);
 	}
 }
-	public void sendMessage(Update update, String message) {
-		SendMessage msg = new SendMessage();
-		msg.setChatId(update.getMessage().getChatId());
-		msg.setText(message);
-		msg.enableMarkdown(true);
-		
-		try {
-			execute(msg);
-		}
-		catch (TelegramApiException e) {
-			e.printStackTrace();
-		}
-	}
-	public void sendMessageAdmin(Update update, String message) {
-		SendMessage msg = new SendMessage();
-		msg.setChatId(idAdmin);
-		msg.setText(message);
-		msg.enableMarkdown(true);
-		
-		try {
-			execute(msg);
-		}
-		catch (TelegramApiException e) {
-			e.printStackTrace();
-		}
-	}
+
 
 	@Override
 	public String getBotUsername() {
@@ -257,9 +213,18 @@ public class TelegramBot extends TelegramLongPollingBot{
 			execute(message);
 		}
 		catch(TelegramApiException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-		
+
+	}
+	public void executeMessage(SendPhoto message) {
+		try {
+			execute(message);
+		}
+		catch(TelegramApiException e) {
+			throw new RuntimeException(e);
+		}
+
 	}
 
 }

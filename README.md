@@ -21,21 +21,23 @@ This Telegram bot is a model that will show products for sale and will have auto
 
 ### Commands for users
 
-* ```/start``` - Start the bot
-* ```/id``` - Get your Telegram ID
-* ```/suporte``` - Send a message to the admin
 * ```/ajuda``` - Command list
+* ```/id``` - Get your Telegram ID
+* ```/start``` - Start the bot
+* ```/suporte``` - Send a message to the admin
 
 ### Commands for admin
 
-* ```/ban``` - Ban a user
-* ```/unban``` - Unban a user
+* ```/ajuda``` - Command list admin
+* ```/anunciar``` - Send an ad for all
+* ```/ban``` - Ban a user*
 * ```/banidos``` - List banned users
 * ```/deletartudo``` - Delete all data
-* ```/usuarios``` - List registered users in the bot
 * ```/licenca``` - License information
+* ```/unban``` - Unban a user
+* ```/usuarios``` - List registered users in the bot
+* ```/produtos``` - Show products config
 * ```/verid``` - Get the Telegram ID of a user registered in the bot
-* ```/ajuda``` - Command list admin
 
 ## Author
 
@@ -43,4 +45,4 @@ This Telegram bot is a model that will show products for sale and will have auto
 
 ## Image example
 
-![TelegramAPIBot Model](./assets/model.jpg)
+![TelegramAPIBot Model](assets/img.png)
