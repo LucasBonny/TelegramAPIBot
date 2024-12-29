@@ -5,8 +5,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import functions.Product;
@@ -17,23 +15,24 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import handlers.CommandHandler;
 import handlers.MessageHandler;
+import utils.ReplyMarkupUtil;
 
 @Component
 public class TelegramBot extends TelegramLongPollingBot{
 
 	private final MessageHandler messageHandler = new MessageHandler(this);
 	private final Product product = new Product(this, messageHandler);
+	private final ReplyMarkupUtil replyMarkupUtil = new ReplyMarkupUtil(this, product);
 	private final CommandHandler commandHandler = new CommandHandler(this, product, messageHandler);
 
 	private final String botName;
 	private final Long idAdmin;
-	
+
 	//Mensagens
 
 	public String STICKER = "CAACAgIAAxkBAAOpZ2m28lRy3l_xMgRuUSQlRvrbSqwAAncAA0tCIhGZCao8QXigcjYE";
@@ -44,7 +43,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 	public String ALREADY_USER = "Usuário já está banido, caso deseje tirá-lo digite /unban!";
 	public String REGISTERED_USER = "Usuário novo registrado!";
 	public String NOT_EXISTS_USER = "Esse usuário não está presente nessa lista!";
-	
+
 	//Rotas
 	public String STARTED_USERS = "Users.txt";
 	public String BANNED_USERS = "BannedUsers.txt";
@@ -53,7 +52,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 	//Comandos
 	public String BAN_COMMAND = "Por gentileza, informe:\n\n/ban (ID) (MOTIVO)";
 	public String UNBAN_COMMAND = "Por gentileza, informe:\n\n/unban (ID)";
-	
+
 	public TelegramBot(String botName, String botToken, Long idAdmin) {
 		super(botToken);
 		this.idAdmin = idAdmin;
@@ -71,7 +70,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	@Override
 	public void onUpdateReceived(Update update) {
 		/////////MENSAGEM///////////
@@ -79,7 +78,7 @@ public class TelegramBot extends TelegramLongPollingBot{
 			//Username invalid
 			if(update.getMessage().getChat().getUserName() == null) {
 				System.out.println(LocalDateTime.now()
-						.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) + " -> " + "O usuário com o ID " + update.getMessage().getChat().getFirstName() 
+						.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) + " -> " + "O usuário com o ID " + update.getMessage().getChat().getFirstName()
 						+ "(" + update.getMessage().getChatId() + ") tentou usar o bot sem usuário!");
 				userNameInvalid(update);
 				return;
@@ -89,41 +88,25 @@ public class TelegramBot extends TelegramLongPollingBot{
 				return;
 			}
 			if(update.hasMessage() && update.getMessage().hasText()) {
-				String text = update.getMessage().getText();				
-				if(text.startsWith("/")) {					
+				String text = update.getMessage().getText();
+				if(text.startsWith("/")) {
 					commandHandler.handleCommand(update);
 				}
 				else {
 					messageHandler.handleMessage(update);
 				}
 			}
-			
+
 		}
-		else if(update.hasCallbackQuery()) {
+		if(update.hasCallbackQuery()) {
 			var callback = update.getCallbackQuery();
 			String callbackData = callback.getData();
 			Long chatId = callback.getMessage().getChatId();
-			handleButtonInteraction(chatId, callbackData);
+			replyMarkupUtil.handleButtonInteraction(chatId, callbackData);
 		}
-		
-	}
-	
-	//	handleButton
-	private List<InlineKeyboardButton> newButton(String text,String data) {
-		InlineKeyboardButton button = new InlineKeyboardButton();
-		button.setText(text);
-		button.setCallbackData(data);
-        return List.of(button);
-	}
-	private List<InlineKeyboardButton> newButton(String text) {
-		
-		InlineKeyboardButton button = new InlineKeyboardButton();
-		button.setText(text);
-		button.setCallbackData(text);
 
-        return List.of(button);
 	}
-	
+
 	private boolean BannedUsers(Update update) {
 		try (BufferedReader br = new BufferedReader(new FileReader(BANNED_USERS))){
 			String line = br.readLine();
@@ -142,16 +125,15 @@ public class TelegramBot extends TelegramLongPollingBot{
 		}
 		return false;
 	}
-	
 
 	public void logHandle(Update update) {
 		//Log
 		System.out.println(LocalDateTime.now()
-				.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) + " -> " 
-			+ "@"+ update.getMessage().getChat().getUserName() +"(" + update.getMessage().getChatId() + ") > " 
-			+ update.getMessage().getText());
+				.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) + " -> "
+				+ "@"+ update.getMessage().getChat().getUserName() +"(" + update.getMessage().getChatId() + ") > "
+				+ update.getMessage().getText());
 	}
-	
+
 	public void menuList(Update update) {
 		sendSticker(update, STICKER);
 		SendMessage message = new SendMessage();
@@ -159,12 +141,12 @@ public class TelegramBot extends TelegramLongPollingBot{
 		product.productFinder(update,"Olá " + update.getMessage().getChat().getFirstName()
 				+ ", seja bem vindo ao bot de serviços automáticos!" + "\n\nDev: @LucasBonny");
 	}
-	
+
 	private void sendSticker(Update update, String sticker) {
 		SendSticker stk = new SendSticker();
 		stk.setChatId(update.getMessage().getChatId());
 		stk.setSticker(new InputFile(sticker));
-		
+
 		try {
 			execute(stk);
 		}
@@ -172,35 +154,10 @@ public class TelegramBot extends TelegramLongPollingBot{
 			throw new RuntimeException(e);
 		}
 	}
-	
-	
-	
-//	private void createButton(SendMessage message, Update update) {
-//		
-//	}
-	private void handleButtonInteraction(Long chatId, String callbackData) {
-		String responseText = switch(callbackData) {
-		case "option_1" -> "Teste 1";
-		case "option_2" -> "Teste 2";
-		default -> "Teste 3";
-	};
-	
-	SendMessage responseMessage = new SendMessage();
-	responseMessage.setChatId(chatId);
-	responseMessage.setText(responseText);
-	
-	try {
-		execute(responseMessage);
-	}
-	catch (TelegramApiException e) {
-		throw new RuntimeException(e);
-	}
-}
-
 
 	@Override
 	public String getBotUsername() {
-		
+
 		return this.botName;
 	}
 

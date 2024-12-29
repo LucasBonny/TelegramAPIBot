@@ -30,7 +30,7 @@ This Telegram bot is a model that will show products for sale and will have auto
 
 * ```/ajuda``` - Command list admin
 * ```/anunciar``` - Send an ad for all
-* ```/ban``` - Ban a user*
+* ```/ban``` - Ban a user
 * ```/banidos``` - List banned users
 * ```/deletartudo``` - Delete all data
 * ```/licenca``` - License information

@@ -44,11 +44,12 @@ public class CommandHandler {
 	 * /banidos
 	 * /ajuda
 	 * */
-	
+
+
 	public void handleCommand(Update update) {
 		String command = update.getMessage().getText();
 		Long ChatId = update.getMessage().getChatId();
-		
+
 		switch(command.toLowerCase()) {
 			case "/start": {
 				try (BufferedReader br = new BufferedReader(new FileReader(bot.STARTED_USERS))){
@@ -63,9 +64,9 @@ public class CommandHandler {
 					}
 					if(!exists) {
 						try (BufferedWriter bw = new BufferedWriter(new FileWriter(bot.STARTED_USERS,true))){
-							bw.write(update.getMessage().getChat().getUserName() + " " 
-						+ update.getMessage().getChat().getId() + " " + LocalDateTime.now()
-						.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+							bw.write(update.getMessage().getChat().getUserName() + " "
+									+ update.getMessage().getChat().getId() + " " + LocalDateTime.now()
+									.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
 							messageHandler.sendMessageAdmin(update, bot.REGISTERED_USER + "\n\n@" + update.getMessage().getChat().getUserName() + " `"
 									+ update.getMessage().getChat().getId() + "`");
 							bw.newLine();
@@ -91,12 +92,12 @@ public class CommandHandler {
 				bot.logHandle(update);
 				if(isAdmin(update)) break;
 				String[] parts = update.getMessage().getText().split(" ");
-				
+
 				if(parts.length < 2) {
 					messageHandler.sendMessage(update, "Por gentileza, informe:\n\n/verid (ID)");
 					break;
 				}
-				
+
 				try (BufferedReader br = new BufferedReader(new FileReader(bot.STARTED_USERS))) {
 					String line;
 					while((line = br.readLine()) != null) {
@@ -106,9 +107,9 @@ public class CommandHandler {
 							break;
 						}
 					}
-                    messageHandler.sendMessage(update, "Esse ID não existe! digite /usuarios para ver os usuários registrados!");
-                    break;
-                }
+					messageHandler.sendMessage(update, "Esse ID não existe! digite /usuarios para ver os usuários registrados!");
+					break;
+				}
 				catch(IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -116,7 +117,7 @@ public class CommandHandler {
 			case "/id": {
 				bot.logHandle(update);
 				messageHandler.sendMessage(update, update.getMessage().getChat().getFirstName() + " seu id é: \n `" + update.getMessage().getChatId() + "`");
-			break;
+				break;
 			}
 			case "/banidos": {
 				bot.logHandle(update);
@@ -130,10 +131,10 @@ public class CommandHandler {
 					}
 					StringBuilder mensagem = new StringBuilder();
 					mensagem.append("❌ Usuários Banidos ❌\n\n");
-					
+
 					while(line != null) {
 						String[] parts = line.split(" ");
-						
+
 						//logica de busca
 						try (BufferedReader br2 = new BufferedReader(new FileReader(bot.STARTED_USERS))){
 							String line2 = br2.readLine();
@@ -147,10 +148,10 @@ public class CommandHandler {
 								line2 = br2.readLine();
 							}
 						}
-						
+
 						mensagem.append("`").append(parts[0]).append("` ");
 						for(int i = 1; i < parts.length; i++) {
-							
+
 							mensagem.append(parts[i]).append(" ");
 							if(i == parts.length -1) {
 								mensagem.append("\n");
@@ -200,16 +201,16 @@ public class CommandHandler {
 					messageHandler.sendMessage(update, "Erro ao processar a lista de banidos!");
 					throw new RuntimeException(e);
 				}
-                System.out.println("Teste 1");
-                File originalFile = new File(bot.BANNED_USERS);
-                File tempFile = new File(bot.BANNED_USERS + "_temp");
-                if(originalFile.delete() && tempFile.renameTo(originalFile)) {
-                    messageHandler.sendMessage(update, "Usuário desbanido com sucesso!");
-                }
-                else {
-                    messageHandler.sendMessage(update, "Erro ao atualizar a lista de banidos!");
-                }
-            }
+				System.out.println("Teste 1");
+				File originalFile = new File(bot.BANNED_USERS);
+				File tempFile = new File(bot.BANNED_USERS + "_temp");
+				if(originalFile.delete() && tempFile.renameTo(originalFile)) {
+					messageHandler.sendMessage(update, "Usuário desbanido com sucesso!");
+				}
+				else {
+					messageHandler.sendMessage(update, "Erro ao atualizar a lista de banidos!");
+				}
+			}
 			case "/criarprod" : {
 				bot.logHandle(update);
 				if (isAdmin(update)) break;
@@ -252,7 +253,7 @@ public class CommandHandler {
 				try (BufferedWriter bw = new BufferedWriter(new FileWriter(bot.BANNED_USERS,true))){
 					for(int i = 1; i < parts.length; i++) {
 						if(i < parts.length - 1) {
-							 bw.write(parts[i] + " ");
+							bw.write(parts[i] + " ");
 						}
 						else bw.write(parts[i]);
 					}
@@ -288,6 +289,12 @@ public class CommandHandler {
 				bot.logHandle(update);
 				if (isAdmin(update)) break;
 				product.productFinder(update, "Produtos registrados ✅\n\nEscolha um para editá-lo!");
+				break;
+			}
+			case "/ping" : {
+				bot.logHandle(update);
+				if (isAdmin(update)) break;
+				messageHandler.sendMessage(update,"");
 				break;
 			}
 			case "/anunciar" : {
@@ -327,7 +334,7 @@ public class CommandHandler {
 				bot.executeMessage(message);
 				break;
 		}
-		
+
 	}
 
 	private StringBuilder commands(Update update) {
@@ -336,15 +343,15 @@ public class CommandHandler {
 
 		if(update.getMessage().getChatId() == (long) bot.getIdAdmin()) {
 			msg.append("/ajuda - Ver comandos admin\n");
-			msg.append("/anunciar - Anunciar para os usuários\n");
+			msg.append("/anunciar - Anunciar para todos os usuários\n");
 			msg.append("/ban - Banir um usuário\n");
 			msg.append("/banidos - Ver banidos\n");
-			msg.append("/criarprod - Criar um produto\n");
-			msg.append("/produtos - Ver produtos\n");
 			msg.append("/deletartudo - Limpar tudo no bot\n");
 			msg.append("/licenca - Ver informações da licença\n");
 			msg.append("/unban - Desbanir um usuário\n");
 			msg.append("/usuarios - Ver usuários registrados\n");
+			msg.append("/produtos - Ver produtos\n");
+			msg.append("/verid - Ver dados de um usuário pelo id\n");
 		}
 		else {
 			msg.append("/start - Iniciar o bot\n");
@@ -379,8 +386,8 @@ public class CommandHandler {
 			}
 			return res;
 		} catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-	
+			throw new RuntimeException(e);
+		}
+	}
+
 }

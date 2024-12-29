@@ -8,9 +8,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 public class MessageHandler {
-	
+
 	private final TelegramBot bot;
-	
+
 	public MessageHandler(TelegramBot bot) {
 		this.bot = bot;
 	}
@@ -26,6 +26,7 @@ public class MessageHandler {
 		msg.enableMarkdown(true);
 
 		try {
+
 			bot.execute(msg);
 		}
 		catch (TelegramApiException e) {
@@ -72,5 +73,6 @@ public class MessageHandler {
 			bot.executeMessage(message);
 			return;
 		}
+		throw new RuntimeException("Error");
 	}
 }

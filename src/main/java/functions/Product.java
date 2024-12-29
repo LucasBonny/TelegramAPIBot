@@ -62,7 +62,7 @@ public class Product {
 
     }
 
-    private List<String> checkArchive(){
+    public List<String> checkArchive(){
             File path = new File(bot.PRODUCTS_REGISTERED);
             if(!path.exists()){
                     try {
