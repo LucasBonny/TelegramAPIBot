@@ -1,9 +1,9 @@
-package handlers;
+package br.com.gunthercloud.telegramapi.handlers;
 
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import br.com.gunthercloud.telegramapi.TelegramBot;
+import br.com.gunthercloud.telegramapi.config.TelegramBot;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 

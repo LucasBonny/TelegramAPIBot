@@ -1,4 +1,4 @@
-package br.com.gunthercloud.telegramapi;
+package br.com.gunthercloud.telegramapi.config;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import functions.Payment;
-import functions.Product;
+import br.com.gunthercloud.telegramapi.functions.Payment;
+import br.com.gunthercloud.telegramapi.functions.Product;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -17,9 +17,9 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import handlers.CommandHandler;
-import handlers.MessageHandler;
-import utils.ReplyMarkupUtil;
+import br.com.gunthercloud.telegramapi.handlers.CommandHandler;
+import br.com.gunthercloud.telegramapi.handlers.MessageHandler;
+import br.com.gunthercloud.telegramapi.utils.ReplyMarkupUtil;
 
 @Component
 public class TelegramBot extends TelegramLongPollingBot{

@@ -1,6 +1,6 @@
-package functions;
+package br.com.gunthercloud.telegramapi.functions;
 
-import br.com.gunthercloud.telegramapi.TelegramBot;
+import br.com.gunthercloud.telegramapi.config.TelegramBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 public class Payment {

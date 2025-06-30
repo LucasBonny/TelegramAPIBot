@@ -1,4 +1,4 @@
-package handlers;
+package br.com.gunthercloud.telegramapi.handlers;
 
 import java.io.*;
 import java.time.LocalDateTime;
@@ -6,13 +6,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import functions.Product;
+import br.com.gunthercloud.telegramapi.domain.ProductModel;
+import br.com.gunthercloud.telegramapi.functions.Product;
+import br.com.gunthercloud.telegramapi.service.ProductService;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import br.com.gunthercloud.telegramapi.TelegramBot;
+import br.com.gunthercloud.telegramapi.config.TelegramBot;
 
 public class CommandHandler {
 
@@ -51,6 +53,17 @@ public class CommandHandler {
 		Long ChatId = update.getMessage().getChatId();
 
 		switch(command.toLowerCase()) {
+			case "/test": {
+				ProductModel p = new ProductModel();
+				p.setName("Bot de teste");
+				p.setPrice(1.10);
+				p.setLink("nothing");
+				p.setDescription("nada aki");
+				p.setQuantity(1);
+				ProductService productService = new ProductService();
+				productService.createProduct(p);
+				break;
+			}
 			case "/start": {
 				try (BufferedReader br = new BufferedReader(new FileReader(bot.STARTED_USERS))){
 					String line = br.readLine();

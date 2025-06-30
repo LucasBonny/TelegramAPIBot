@@ -1,9 +1,8 @@
-package utils;
+package br.com.gunthercloud.telegramapi.utils;
 
-import br.com.gunthercloud.telegramapi.TelegramBot;
-import functions.Payment;
-import functions.Product;
-import handlers.CommandHandler;
+import br.com.gunthercloud.telegramapi.config.TelegramBot;
+import br.com.gunthercloud.telegramapi.functions.Payment;
+import br.com.gunthercloud.telegramapi.functions.Product;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;

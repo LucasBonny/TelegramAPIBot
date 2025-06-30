@@ -1,16 +1,14 @@
-package functions;
+package br.com.gunthercloud.telegramapi.functions;
 
-import br.com.gunthercloud.telegramapi.TelegramBot;
+import br.com.gunthercloud.telegramapi.config.TelegramBot;
 import java.io.File;
 
-import handlers.MessageHandler;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
+import br.com.gunthercloud.telegramapi.handlers.MessageHandler;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
